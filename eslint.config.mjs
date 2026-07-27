@@ -13,6 +13,21 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Simulation First (docs/01-architecture.md): the simulation layer must
+  // stay framework-free and UI-independent. src/store is the only
+  // permitted bridge between it and React/Zustand/components.
+  {
+    files: ["src/simulation/**/*.ts", "src/modules/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: ["react", "zustand"],
+          patterns: ["@/components/*", "@/store/*"],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

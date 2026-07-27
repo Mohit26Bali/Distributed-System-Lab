@@ -13,6 +13,7 @@ import {
 import { AnimatePresence } from "framer-motion";
 
 import { useEventAnimations } from "@/hooks/useEventAnimations";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { getModuleDefinition } from "@/store/moduleRegistry";
 import { useSimulationStore } from "@/store/simulationStore";
 
@@ -38,6 +39,7 @@ export function SimulationCanvas() {
   const events = useSimulationStore((state) => state.events);
   const animateTransitions = useSimulationStore((state) => state.animateTransitions);
   const dispatch = useSimulationStore((state) => state.dispatch);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const definition = moduleId ? getModuleDefinition(moduleId) : undefined;
 
@@ -74,7 +76,11 @@ export function SimulationCanvas() {
     return { nodes, edges, nodeCenters };
   }, [definition]);
 
-  if (!definition) return null; // ModuleLoader's effect hasn't run yet
+  if (!definition) {
+    // ModuleLoader's effect hasn't run yet -- a brief window, but a plain
+    // blank canvas would look broken rather than loading.
+    return <p className="p-4 text-xs text-text-muted">Loading module…</p>;
+  }
 
   const [firstNodeId, secondNodeId] = definition.nodeIds;
 
@@ -103,7 +109,7 @@ export function SimulationCanvas() {
                 id={packet.id}
                 x={lerp(source.x, target.x, packet.progress)}
                 y={lerp(source.y, target.y, packet.progress)}
-                instant={!animateTransitions}
+                instant={!animateTransitions || prefersReducedMotion}
                 status={packet.status}
               />
             );

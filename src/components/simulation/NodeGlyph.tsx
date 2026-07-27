@@ -26,8 +26,18 @@ export function NodeGlyph({ id, data }: NodeProps<NodeGlyphType>) {
   return (
     <div
       onClick={() => selectNode(id)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Node ${data.label}, ${status}`}
+      aria-pressed={isSelected}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectNode(id);
+        }
+      }}
       className={cn(
-        "flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border-2 text-sm font-medium",
+        "flex h-16 w-16 cursor-pointer items-center justify-center rounded-full border-2 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
         isCrashed
           ? "border-dashed border-red-500 bg-bg-elevated text-text-muted opacity-60"
           : "bg-bg-elevated text-text-primary",

@@ -31,14 +31,31 @@ export function Timeline() {
 
       <div
         role="slider"
+        tabIndex={0}
+        aria-label="Timeline scrubber"
         aria-valuemin={0}
         aria-valuemax={maxTick}
         aria-valuenow={viewTick}
-        className="relative h-6 w-full cursor-pointer rounded bg-bg-elevated"
+        className="relative h-6 w-full cursor-pointer rounded bg-bg-elevated outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const fraction = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
           seek(Math.round(fraction * maxTick));
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            seek(Math.min(maxTick, viewTick + 1));
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            seek(Math.max(0, viewTick - 1));
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            seek(0);
+          } else if (e.key === "End") {
+            e.preventDefault();
+            seek(maxTick);
+          }
         }}
       >
         {markers.map((marker) => (

@@ -27,8 +27,21 @@ export function PacketDot({ id, x, y, instant, status = "in-flight" }: PacketDot
   return (
     <motion.div
       onClick={() => selectMessage(id)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Message ${id}${isDropped ? ", dropped" : ", in flight"}`}
+      aria-pressed={isSelected}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectMessage(id);
+        }
+      }}
       className={cn(
-        "pointer-events-auto absolute flex h-3 w-3 cursor-pointer items-center justify-center rounded-full text-[8px] font-bold leading-none text-white",
+        "pointer-events-auto absolute flex h-3 w-3 cursor-pointer items-center justify-center rounded-full text-[8px] font-bold leading-none text-white outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-1 focus-visible:ring-offset-bg-canvas",
+        // Selection is never color-only: a white ring is the shape/contrast
+        // cue, independent of hue, alongside the color change.
+        isSelected && "ring-2 ring-white/80",
         isDropped
           ? "bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.7)]"
           : isSelected

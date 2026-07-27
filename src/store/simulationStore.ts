@@ -1,15 +1,19 @@
 import { create } from "zustand";
 
-import { createNetworkingModule } from "@/modules/networking/networkingModule";
 import type { NetworkingAction } from "@/modules/networking/networkingReducer";
+import type { NetworkingState } from "@/modules/networking/networkingState";
 import { Engine } from "@/simulation/engine/Engine";
 import type { SimEvent, Tick } from "@/simulation/engine/types";
 import { NetworkModel } from "@/simulation/network/NetworkModel";
+import { getModuleDefinition } from "./moduleRegistry";
+import { useUiStore } from "./uiStore";
 
 export type PlaybackStatus = "playing" | "paused";
 export type PlaybackSpeed = 0.5 | 1 | 2;
 
 interface SimulationState {
+  /** Which module's engine is currently loaded; null until loadModule() runs. */
+  moduleId: string | null;
   /** The live engine's own tick — only stepForward()/dispatch() ever move this. */
   currentTick: Tick;
   events: readonly SimEvent[];
@@ -24,6 +28,8 @@ interface SimulationState {
   animateTransitions: boolean;
   status: PlaybackStatus;
   speed: PlaybackSpeed;
+  /** Constructs a fresh engine for the given module, discarding any prior one. */
+  loadModule: (moduleId: string) => void;
   dispatch: (action: NetworkingAction) => void;
   seek: (tick: Tick) => void;
   /**
@@ -40,31 +46,55 @@ interface SimulationState {
   setSpeed: (speed: PlaybackSpeed) => void;
 }
 
-// One engine per session for now — there is exactly one simulation on
-// screen and no module-switching concept yet (that's Milestone 10's
-// moduleRegistry). A factory/registry here would be speculative.
-const network = new NetworkModel([
-  { id: "a-b", from: "a", to: "b", latencyTicks: 3 },
-  { id: "a-c", from: "a", to: "c", latencyTicks: 3 },
-  { id: "b-c", from: "b", to: "c", latencyTicks: 3 },
-]);
+// The live engine lives outside the store's own state (Zustand state should
+// only ever be the mirrored, serializable fields) — a plain module-scope
+// reference, reassigned wholesale by loadModule(). getEngine() always reads
+// the *current* value, so no action closure ever holds a stale reference
+// across a module switch.
+let engine: Engine<NetworkingState, NetworkingAction> | null = null;
 
-const engine = new Engine(createNetworkingModule(["a", "b", "c"]), network);
+function getEngine(): Engine<NetworkingState, NetworkingAction> {
+  if (!engine) {
+    throw new Error("No module loaded yet — call loadModule() first.");
+  }
+  return engine;
+}
 
 export const useSimulationStore = create<SimulationState>((set, get) => ({
-  currentTick: engine.getCurrentTick(),
-  events: engine.getEvents(),
-  viewTick: engine.getCurrentTick(),
+  moduleId: null,
+  currentTick: 0,
+  events: [],
+  viewTick: 0,
   animateTransitions: true,
   status: "paused",
   speed: 1,
 
-  dispatch: (action) => {
-    engine.dispatch(action);
+  loadModule: (moduleId) => {
+    const definition = getModuleDefinition(moduleId);
+    if (!definition) {
+      throw new Error(`Unknown module: "${moduleId}"`);
+    }
+
+    engine = new Engine(definition.createModule(), new NetworkModel(definition.links));
+    useUiStore.getState().clearSelection();
+
     set({
+      moduleId,
       currentTick: engine.getCurrentTick(),
       events: engine.getEvents(),
       viewTick: engine.getCurrentTick(),
+      animateTransitions: true,
+      status: "paused",
+      speed: 1,
+    });
+  },
+
+  dispatch: (action) => {
+    getEngine().dispatch(action);
+    set({
+      currentTick: getEngine().getCurrentTick(),
+      events: getEngine().getEvents(),
+      viewTick: getEngine().getCurrentTick(),
       animateTransitions: true,
     });
   },
@@ -81,11 +111,11 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       return;
     }
 
-    engine.advance();
+    getEngine().advance();
     set({
-      currentTick: engine.getCurrentTick(),
-      events: engine.getEvents(),
-      viewTick: engine.getCurrentTick(),
+      currentTick: getEngine().getCurrentTick(),
+      events: getEngine().getEvents(),
+      viewTick: getEngine().getCurrentTick(),
       animateTransitions: true,
     });
   },
@@ -95,7 +125,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   },
 
   play: () => {
-    set({ status: "playing", viewTick: engine.getCurrentTick(), animateTransitions: true });
+    set({ status: "playing", viewTick: getEngine().getCurrentTick(), animateTransitions: true });
   },
 
   pause: () => set({ status: "paused" }),

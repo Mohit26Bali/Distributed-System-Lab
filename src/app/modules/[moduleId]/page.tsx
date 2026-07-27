@@ -1,7 +1,12 @@
+import { notFound } from "next/navigation";
+
 import { FaultInjectionMenu } from "@/components/controls/FaultInjectionMenu";
+import { ExplanationPane } from "@/components/learning/ExplanationPane";
 import { InspectorPanel } from "@/components/inspector/InspectorPanel";
+import { ModuleLoader } from "@/components/simulation/ModuleLoader";
 import { SimulationCanvas } from "@/components/simulation/SimulationCanvas";
 import { Timeline } from "@/components/timeline/Timeline";
+import { getModuleDefinition } from "@/store/moduleRegistry";
 
 type ModulePageProps = {
   params: Promise<{ moduleId: string }>;
@@ -10,21 +15,24 @@ type ModulePageProps = {
 export default async function ModulePage({ params }: ModulePageProps) {
   const { moduleId } = await params;
 
+  if (!getModuleDefinition(moduleId)) {
+    notFound();
+  }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
+      <ModuleLoader moduleId={moduleId} />
+
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-[280px] shrink-0 overflow-y-auto border-r border-border-subtle bg-bg-panel p-4">
-          <h2 className="text-sm font-medium text-text-secondary">Learning panel</h2>
-          <p className="mt-2 text-sm text-text-muted">
-            Module: <span className="font-mono text-text-primary">{moduleId}</span>
-          </p>
+        <aside className="w-70 shrink-0 overflow-y-auto border-r border-border-subtle bg-bg-panel p-4">
+          <ExplanationPane />
         </aside>
 
         <main className="flex-1 overflow-hidden bg-bg-canvas">
           <SimulationCanvas />
         </main>
 
-        <aside className="w-[320px] shrink-0 overflow-y-auto border-l border-border-subtle bg-bg-panel p-4">
+        <aside className="w-80 shrink-0 overflow-y-auto border-l border-border-subtle bg-bg-panel p-4">
           <InspectorPanel />
         </aside>
       </div>

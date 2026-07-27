@@ -21,4 +21,12 @@ describe("uiStore", () => {
     expect(useUiStore.getState().selectedMessageId).toBe("msg-0");
     expect(useUiStore.getState().selectedNodeId).toBeNull();
   });
+
+  it("clearSelection resets both selected node and message", () => {
+    useUiStore.getState().selectNode("a");
+    useUiStore.getState().clearSelection();
+
+    expect(useUiStore.getState().selectedNodeId).toBeNull();
+    expect(useUiStore.getState().selectedMessageId).toBeNull();
+  });
 });

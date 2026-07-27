@@ -45,16 +45,15 @@ function lerp(a: number, b: number, t: number): number {
 }
 
 export function SimulationCanvas() {
-  const currentTick = useSimulationStore((state) => state.currentTick);
   const viewTick = useSimulationStore((state) => state.viewTick);
   const events = useSimulationStore((state) => state.events);
   const animateTransitions = useSimulationStore((state) => state.animateTransitions);
-  const step = useSimulationStore((state) => state.step);
   const dispatch = useSimulationStore((state) => state.dispatch);
 
   // Rendered state always reflects viewTick, not the live currentTick, so
   // scrubbing the timeline (Milestone 6) shows the canvas exactly as it
-  // was at that tick — the "Tick: N" readout below still shows live tick.
+  // was at that tick — the Timeline panel shows both viewTick and the
+  // live tick; playback controls live there too (Milestone 8).
   const { packets } = useEventAnimations(events, viewTick);
 
   return (
@@ -87,16 +86,6 @@ export function SimulationCanvas() {
         position="top-left"
         className="flex items-center gap-3 rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-sm"
       >
-        <span className="text-text-secondary">
-          Tick: <span className="font-mono text-text-primary">{currentTick}</span>
-        </span>
-        <button
-          type="button"
-          onClick={step}
-          className="rounded border border-border-subtle bg-bg-panel px-2 py-1 text-xs text-text-primary hover:bg-bg-canvas"
-        >
-          Advance Tick
-        </button>
         <button
           type="button"
           onClick={() => dispatch({ type: "SEND_PING", from: "a", to: "b" })}

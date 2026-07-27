@@ -1,6 +1,7 @@
 "use client";
 
 import { useEventTimeline } from "@/hooks/useEventTimeline";
+import { PlaybackControls } from "@/components/controls/PlaybackControls";
 import { useSimulationStore } from "@/store/simulationStore";
 
 import { EventMarker } from "./EventMarker";
@@ -16,9 +17,16 @@ export function Timeline() {
 
   return (
     <div className="flex h-full flex-col justify-center gap-2 px-1">
-      <div className="text-xs text-text-secondary">
-        Viewing tick <span className="font-mono text-text-primary">{viewTick}</span>
-        {viewTick !== currentTick && <span className="ml-2 text-amber-400">(scrubbed)</span>}
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-text-secondary">
+          Viewing tick <span className="font-mono text-text-primary">{viewTick}</span>
+          {viewTick !== currentTick && (
+            <span className="ml-2 text-amber-400">
+              (scrubbed — live: tick <span className="font-mono">{currentTick}</span>)
+            </span>
+          )}
+        </div>
+        <PlaybackControls />
       </div>
 
       <div

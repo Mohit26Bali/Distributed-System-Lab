@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@xyflow/react/dist/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -145,4 +146,21 @@
   html {
     @apply font-sans;
   }
+}
+
+/* React Flow ships light-theme control/attribution chrome by default;
+   override just enough to sit on our dark canvas. */
+.react-flow__controls-button {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  fill: var(--text-primary);
+}
+.react-flow__controls-button:hover {
+  background: var(--bg-panel);
+}
+.react-flow__attribution {
+  background: transparent;
+}
+.react-flow__attribution a {
+  color: var(--text-muted);
 }

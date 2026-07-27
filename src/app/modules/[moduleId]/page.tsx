@@ -1,3 +1,5 @@
+import { SimulationCanvas } from "@/components/simulation/SimulationCanvas";
+
 type ModulePageProps = {
   params: Promise<{ moduleId: string }>;
 };
@@ -15,8 +17,8 @@ export default async function ModulePage({ params }: ModulePageProps) {
           </p>
         </aside>
 
-        <main className="flex-1 overflow-hidden bg-bg-canvas p-4">
-          <h2 className="text-sm font-medium text-text-secondary">Simulation canvas</h2>
+        <main className="flex-1 overflow-hidden bg-bg-canvas">
+          <SimulationCanvas />
         </main>
 
         <aside className="w-[320px] shrink-0 overflow-y-auto border-l border-border-subtle bg-bg-panel p-4">

@@ -3,7 +3,9 @@
 import { getModuleDefinition } from "@/store/moduleRegistry";
 import { useSimulationStore } from "@/store/simulationStore";
 
+import { Challenge } from "./Challenge";
 import { GuidedStep } from "./GuidedStep";
+import { Quiz } from "./Quiz";
 
 export function ExplanationPane() {
   const moduleId = useSimulationStore((state) => state.moduleId);
@@ -23,9 +25,11 @@ export function ExplanationPane() {
           </p>
         ))}
       </div>
-      {/* Keyed by moduleId so switching modules resets guided progress
-          instead of carrying stale step state into a different module. */}
+      {/* Keyed by moduleId so switching modules resets guided/quiz progress
+          instead of carrying stale state into a different module. */}
       <GuidedStep key={moduleId} />
+      {definition.quiz && <Quiz key={`${moduleId}-quiz`} quiz={definition.quiz} />}
+      {definition.challenge && <Challenge challenge={definition.challenge} />}
     </div>
   );
 }

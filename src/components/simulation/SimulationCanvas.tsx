@@ -75,6 +75,7 @@ export function SimulationCanvas() {
           return (
             <PacketDot
               key={packet.id}
+              id={packet.id}
               x={lerp(source.x, target.x, packet.progress)}
               y={lerp(source.y, target.y, packet.progress)}
               instant={!animateTransitions}

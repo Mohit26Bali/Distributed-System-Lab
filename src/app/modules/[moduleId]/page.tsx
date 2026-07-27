@@ -1,3 +1,4 @@
+import { InspectorPanel } from "@/components/inspector/InspectorPanel";
 import { SimulationCanvas } from "@/components/simulation/SimulationCanvas";
 import { Timeline } from "@/components/timeline/Timeline";
 
@@ -23,7 +24,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
         </main>
 
         <aside className="w-[320px] shrink-0 overflow-y-auto border-l border-border-subtle bg-bg-panel p-4">
-          <h2 className="text-sm font-medium text-text-secondary">Inspector</h2>
+          <InspectorPanel />
         </aside>
       </div>
 

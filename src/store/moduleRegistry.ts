@@ -3,6 +3,7 @@ import type { NetworkingAction } from "@/modules/networking/networkingReducer";
 import type { NetworkingState } from "@/modules/networking/networkingState";
 import type { SimulationModule } from "@/simulation/engine/types";
 import type { LinkConfig } from "@/simulation/network/types";
+import { NETWORKING_GUIDED_STEPS, type GuidedStepDefinition } from "./guidedSteps";
 
 export interface NodePosition {
   x: number;
@@ -23,6 +24,8 @@ export interface ModuleDefinition {
   links: LinkConfig[];
   nodePositions: Record<string, NodePosition>;
   createModule: () => SimulationModule<NetworkingState, NetworkingAction>;
+  /** Absent (not empty array) means this module has no guided content yet. */
+  guidedSteps?: GuidedStepDefinition[];
 }
 
 export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
@@ -63,6 +66,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
       c: { x: 320, y: 280 },
     },
     createModule: () => createNetworkingModule(["a", "b", "c"]),
+    guidedSteps: NETWORKING_GUIDED_STEPS,
   },
 };
 

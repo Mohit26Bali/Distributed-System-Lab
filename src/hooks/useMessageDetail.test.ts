@@ -22,6 +22,16 @@ function deliveredEvent(tick: number, messageId: string): SimEvent {
   };
 }
 
+function droppedEvent(tick: number, messageId: string): SimEvent {
+  return {
+    id: `dropped-${messageId}`,
+    tick,
+    type: "MESSAGE_DROPPED",
+    moduleId: "networking",
+    payload: { messageId },
+  };
+}
+
 describe("deriveMessageDetail", () => {
   it("returns undefined when the message has not been sent yet as of viewTick", () => {
     const events = [sentEvent(5, "msg-0", 5, 8)];
@@ -60,4 +70,14 @@ describe("deriveMessageDetail", () => {
       expect(deriveMessageDetail(events, "msg-0", 1)?.status).toBe("in-flight");
     },
   );
+
+  it("reports dropped status once viewTick reaches the tick the message was dropped", () => {
+    const events = [sentEvent(0, "msg-0", 0, 3), droppedEvent(2, "msg-0")];
+    expect(deriveMessageDetail(events, "msg-0", 2)?.status).toBe("dropped");
+  });
+
+  it("still reports in-flight before the drop tick, even though the log already has the drop", () => {
+    const events = [sentEvent(0, "msg-0", 0, 3), droppedEvent(2, "msg-0")];
+    expect(deriveMessageDetail(events, "msg-0", 1)?.status).toBe("in-flight");
+  });
 });

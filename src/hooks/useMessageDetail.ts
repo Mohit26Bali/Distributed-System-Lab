@@ -9,7 +9,7 @@ export interface MessageDetail {
   to: string;
   sentTick: Tick;
   deliveredTick: Tick;
-  status: "in-flight" | "delivered";
+  status: "in-flight" | "delivered" | "dropped";
 }
 
 /**
@@ -32,7 +32,7 @@ export function deriveMessageDetail(
     to,
     sentTick,
     deliveredTick,
-    status: entry.delivered ? "delivered" : "in-flight",
+    status: entry.resolution,
   };
 }
 

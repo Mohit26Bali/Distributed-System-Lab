@@ -1,6 +1,7 @@
 "use client";
 
 import { useMessageDetail } from "@/hooks/useMessageDetail";
+import { useNodeStatus } from "@/hooks/useNodeStatus";
 import { useSimulationStore } from "@/store/simulationStore";
 import { useUiStore } from "@/store/uiStore";
 
@@ -14,9 +15,10 @@ export function InspectorPanel() {
   const viewTick = useSimulationStore((state) => state.viewTick);
 
   const messageDetail = useMessageDetail(events, selectedMessageId, viewTick);
+  const nodeStatus = useNodeStatus(events, selectedNodeId, viewTick);
 
   if (selectedNodeId) {
-    return <NodeInspector nodeId={selectedNodeId} />;
+    return <NodeInspector nodeId={selectedNodeId} status={nodeStatus} />;
   }
 
   if (selectedMessageId) {

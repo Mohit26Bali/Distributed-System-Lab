@@ -9,6 +9,7 @@ import {
   type EdgeTypes,
   type NodeTypes,
 } from "@xyflow/react";
+import { AnimatePresence } from "framer-motion";
 
 import { useEventAnimations } from "@/hooks/useEventAnimations";
 import { useSimulationStore } from "@/store/simulationStore";
@@ -68,19 +69,22 @@ export function SimulationCanvas() {
       <Background color="var(--border-subtle)" />
       <Controls showInteractive={false} />
       <ViewportPortal>
-        {packets.map((packet) => {
-          const source = NODE_CENTERS[packet.from];
-          const target = NODE_CENTERS[packet.to];
-          return (
-            <PacketDot
-              key={packet.id}
-              id={packet.id}
-              x={lerp(source.x, target.x, packet.progress)}
-              y={lerp(source.y, target.y, packet.progress)}
-              instant={!animateTransitions}
-            />
-          );
-        })}
+        <AnimatePresence>
+          {packets.map((packet) => {
+            const source = NODE_CENTERS[packet.from];
+            const target = NODE_CENTERS[packet.to];
+            return (
+              <PacketDot
+                key={packet.id}
+                id={packet.id}
+                x={lerp(source.x, target.x, packet.progress)}
+                y={lerp(source.y, target.y, packet.progress)}
+                instant={!animateTransitions}
+                status={packet.status}
+              />
+            );
+          })}
+        </AnimatePresence>
       </ViewportPortal>
       <Panel
         position="top-left"

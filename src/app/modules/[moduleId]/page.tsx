@@ -1,3 +1,4 @@
+import { FaultInjectionMenu } from "@/components/controls/FaultInjectionMenu";
 import { InspectorPanel } from "@/components/inspector/InspectorPanel";
 import { SimulationCanvas } from "@/components/simulation/SimulationCanvas";
 import { Timeline } from "@/components/timeline/Timeline";
@@ -28,8 +29,11 @@ export default async function ModulePage({ params }: ModulePageProps) {
         </aside>
       </div>
 
-      <footer className="h-[120px] shrink-0 border-t border-border-subtle bg-bg-panel p-4">
-        <Timeline />
+      <footer className="flex h-30 shrink-0 items-center gap-4 border-t border-border-subtle bg-bg-panel p-4">
+        <div className="flex-1">
+          <Timeline />
+        </div>
+        <FaultInjectionMenu />
       </footer>
     </div>
   );

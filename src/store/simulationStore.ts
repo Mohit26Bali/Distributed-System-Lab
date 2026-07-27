@@ -7,10 +7,21 @@ import type { SimEvent, Tick } from "@/simulation/engine/types";
 import { NetworkModel } from "@/simulation/network/NetworkModel";
 
 interface SimulationState {
+  /** The live engine's own tick — only step()/dispatch() ever move this. */
   currentTick: Tick;
   events: readonly SimEvent[];
+  /**
+   * The tick currently being displayed. Equal to currentTick except while
+   * scrubbed via the timeline (Milestone 6) — seeking never touches the
+   * live engine, it only changes what's rendered, since every visual is
+   * already a pure projection of (events, tick).
+   */
+  viewTick: Tick;
+  /** False right after a seek (snap, no animation); true after step/dispatch. */
+  animateTransitions: boolean;
   step: () => void;
   dispatch: (action: NetworkingAction) => void;
+  seek: (tick: Tick) => void;
 }
 
 // One engine per session for now — there is exactly one simulation on
@@ -27,12 +38,27 @@ const engine = new Engine(createNetworkingModule(["a", "b", "c"]), network);
 export const useSimulationStore = create<SimulationState>((set) => ({
   currentTick: engine.getCurrentTick(),
   events: engine.getEvents(),
+  viewTick: engine.getCurrentTick(),
+  animateTransitions: true,
   step: () => {
     engine.advance();
-    set({ currentTick: engine.getCurrentTick(), events: engine.getEvents() });
+    set({
+      currentTick: engine.getCurrentTick(),
+      events: engine.getEvents(),
+      viewTick: engine.getCurrentTick(),
+      animateTransitions: true,
+    });
   },
   dispatch: (action) => {
     engine.dispatch(action);
-    set({ currentTick: engine.getCurrentTick(), events: engine.getEvents() });
+    set({
+      currentTick: engine.getCurrentTick(),
+      events: engine.getEvents(),
+      viewTick: engine.getCurrentTick(),
+      animateTransitions: true,
+    });
+  },
+  seek: (tick) => {
+    set({ viewTick: tick, animateTransitions: false });
   },
 }));

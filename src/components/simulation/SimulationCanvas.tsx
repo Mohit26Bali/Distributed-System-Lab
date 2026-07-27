@@ -46,11 +46,16 @@ function lerp(a: number, b: number, t: number): number {
 
 export function SimulationCanvas() {
   const currentTick = useSimulationStore((state) => state.currentTick);
+  const viewTick = useSimulationStore((state) => state.viewTick);
   const events = useSimulationStore((state) => state.events);
+  const animateTransitions = useSimulationStore((state) => state.animateTransitions);
   const step = useSimulationStore((state) => state.step);
   const dispatch = useSimulationStore((state) => state.dispatch);
 
-  const { packets } = useEventAnimations(events, currentTick);
+  // Rendered state always reflects viewTick, not the live currentTick, so
+  // scrubbing the timeline (Milestone 6) shows the canvas exactly as it
+  // was at that tick — the "Tick: N" readout below still shows live tick.
+  const { packets } = useEventAnimations(events, viewTick);
 
   return (
     <ReactFlow
@@ -72,6 +77,7 @@ export function SimulationCanvas() {
               key={packet.id}
               x={lerp(source.x, target.x, packet.progress)}
               y={lerp(source.y, target.y, packet.progress)}
+              instant={!animateTransitions}
             />
           );
         })}

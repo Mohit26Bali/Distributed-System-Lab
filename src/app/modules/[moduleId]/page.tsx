@@ -1,4 +1,5 @@
 import { SimulationCanvas } from "@/components/simulation/SimulationCanvas";
+import { Timeline } from "@/components/timeline/Timeline";
 
 type ModulePageProps = {
   params: Promise<{ moduleId: string }>;
@@ -27,9 +28,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
       </div>
 
       <footer className="h-[120px] shrink-0 border-t border-border-subtle bg-bg-panel p-4">
-        <h2 className="text-sm font-medium text-text-secondary">
-          Timeline / playback controls
-        </h2>
+        <Timeline />
       </footer>
     </div>
   );

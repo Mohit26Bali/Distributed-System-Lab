@@ -25,4 +25,19 @@ describe("EventLog", () => {
     expect(log.upTo(0)).toEqual([]);
     expect(log.upTo(99).map((e) => e.tick)).toEqual([1, 2, 3]);
   });
+
+  it("append() produces a new array reference each time, not a mutated-in-place one", () => {
+    // Regression test: consumers (React's useMemo, Zustand selectors) rely
+    // on referential equality to detect "the log changed." If all() ever
+    // returned the same array object across appends, memoized derivations
+    // keyed only on the events reference would silently freeze forever.
+    const log = new EventLog();
+    const before = log.all();
+
+    log.append(makeEvent(1));
+    const after = log.all();
+
+    expect(after).not.toBe(before);
+    expect(after).toHaveLength(1);
+  });
 });

@@ -1,5 +1,5 @@
 import type { SimEvent } from "@/simulation/engine/types";
-import { NETWORK_EVENT_TYPES } from "@/simulation/events/networkEvents";
+import { NETWORK_EVENT_TYPES, type MessageDroppedPayload } from "@/simulation/events/networkEvents";
 import { NODE_EVENT_TYPES, type NodeCrashedPayload } from "@/simulation/events/nodeEvents";
 
 export interface GuidedStepDefinition {
@@ -19,6 +19,11 @@ function hasEventType(events: readonly SimEvent[], type: string): boolean {
   return events.some((event) => event.type === type);
 }
 
+// Order matters here: killing node B (below) is permanent for the rest of
+// the session — no recovery mechanic exists yet (see docs/09). Every step
+// that needs B reachable-but-not-crashed (manual drop, partition, drop
+// rate) must come BEFORE kill-node-b, or its destination-crashed check
+// would always win and the intended reason could never be demonstrated.
 export const NETWORKING_GUIDED_STEPS: GuidedStepDefinition[] = [
   {
     id: "send-ping",
@@ -35,6 +40,39 @@ export const NETWORKING_GUIDED_STEPS: GuidedStepDefinition[] = [
     isSatisfied: (events) => hasEventType(events, NETWORK_EVENT_TYPES.MESSAGE_DELIVERED),
   },
   {
+    id: "manual-drop",
+    instruction: 'Send another ping, select it while in flight, and click "Drop Message."',
+    observation:
+      "MESSAGE_DROPPED — the log records that a message never arrived, not why. Check the inspector's reason.",
+    isSatisfied: (events) => hasEventType(events, NETWORK_EVENT_TYPES.MESSAGE_DROPPED),
+  },
+  {
+    id: "partition-drop",
+    instruction:
+      'Click "Partition" in the fault menu, then send a ping across the split and step forward until it resolves.',
+    observation:
+      'Dropped again — but check the inspector: this one\'s reason is "partitioned," not a crash or a random loss. The network doesn\'t announce a partition; you only see silence.',
+    isSatisfied: (events) =>
+      events.some(
+        (event) =>
+          event.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED &&
+          (event.payload as MessageDroppedPayload).reason === "partitioned",
+      ),
+  },
+  {
+    id: "adjustable-drop-rate",
+    instruction:
+      "Heal the partition, set the drop rate slider to 100% in Network Configuration, apply it, then send one more ping and step forward until it resolves.",
+    observation:
+      'This message never even reached a crashed node or a partition — it was lost purely by chance, reason "random-loss." Same event type, same inspector shape, a third distinct cause.',
+    isSatisfied: (events) =>
+      events.some(
+        (event) =>
+          event.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED &&
+          (event.payload as MessageDroppedPayload).reason === "random-loss",
+      ),
+  },
+  {
     id: "kill-node-b",
     instruction: 'Select node B, then click "Kill Node" in the fault menu at the bottom right.',
     observation: "Node B is crashed now — a real NODE_CRASHED event, not just a color change.",
@@ -47,16 +85,14 @@ export const NETWORKING_GUIDED_STEPS: GuidedStepDefinition[] = [
   },
   {
     id: "send-to-crashed-node",
-    instruction: "Send another ping to B, then step forward until it resolves.",
+    instruction: "Send one last ping to B, then step forward until it resolves.",
     observation:
-      "This time it was dropped, not delivered — the destination was already dead when it arrived.",
-    isSatisfied: (events) => hasEventType(events, NETWORK_EVENT_TYPES.MESSAGE_DROPPED),
-  },
-  {
-    id: "manual-drop",
-    instruction: 'Select any in-flight message and click "Drop Message" in the fault menu.',
-    observation:
-      "Same MESSAGE_DROPPED event as before — the log records that a message never arrived, not why.",
-    isSatisfied: (events) => hasEventType(events, NETWORK_EVENT_TYPES.MESSAGE_DROPPED),
+      "Dropped, reason \"destination-crashed\" — the message never had a chance, since B was already dead when it arrived.",
+    isSatisfied: (events) =>
+      events.some(
+        (event) =>
+          event.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED &&
+          (event.payload as MessageDroppedPayload).reason === "destination-crashed",
+      ),
   },
 ];

@@ -3,7 +3,7 @@ import type { NetworkingAction } from "@/modules/networking/networkingReducer";
 import type { NetworkingState } from "@/modules/networking/networkingState";
 import type { SimulationModule } from "@/simulation/engine/types";
 import type { LinkConfig } from "@/simulation/network/types";
-import { NETWORKING_CHALLENGE, type ChallengeDefinition } from "./challenges";
+import { NETWORKING_CHALLENGES, type ChallengeDefinition } from "./challenges";
 import { NETWORKING_GUIDED_STEPS, type GuidedStepDefinition } from "./guidedSteps";
 import { NETWORKING_QUIZ, type PredictiveQuizDefinition } from "./quiz";
 
@@ -29,7 +29,7 @@ export interface ModuleDefinition {
   /** Absent (not empty array) means this module has no guided content yet. */
   guidedSteps?: GuidedStepDefinition[];
   quiz?: PredictiveQuizDefinition;
-  challenge?: ChallengeDefinition;
+  challenges?: ChallengeDefinition[];
 }
 
 export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
@@ -57,6 +57,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     description: [
       "A network is not a reliable, instant pipe. Every link here has a configured latency: a sent message doesn't arrive until a specific number of ticks later, and you can watch it travel.",
       "Kill a node mid-flight and see the asymmetry: a message already sent by a node that then crashes still arrives, but a message arriving at an already-crashed node is dropped instead.",
+      "A message can fail to arrive for more than one reason: a partition can silently cut off a whole group of nodes, a configured drop rate can lose messages purely by chance, and either one is inspectable as an explicit reason once dropped. You can also reorder a message's arrival relative to others, or duplicate one so it arrives twice.",
     ],
     nodeIds: ["a", "b", "c"],
     links: [
@@ -72,7 +73,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     createModule: () => createNetworkingModule(["a", "b", "c"]),
     guidedSteps: NETWORKING_GUIDED_STEPS,
     quiz: NETWORKING_QUIZ,
-    challenge: NETWORKING_CHALLENGE,
+    challenges: NETWORKING_CHALLENGES,
   },
 };
 

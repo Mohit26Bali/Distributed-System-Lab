@@ -22,13 +22,28 @@ function deliveredEvent(tick: number, messageId: string): SimEvent {
   };
 }
 
-function droppedEvent(tick: number, messageId: string): SimEvent {
+function droppedEvent(tick: number, messageId: string, reason = "manual"): SimEvent {
   return {
     id: `dropped-${messageId}`,
     tick,
     type: "MESSAGE_DROPPED",
     moduleId: "networking",
-    payload: { messageId },
+    payload: { messageId, reason },
+  };
+}
+
+function reorderedEvent(
+  tick: number,
+  messageId: string,
+  previousDeliveredTick: number,
+  newDeliveredTick: number,
+): SimEvent {
+  return {
+    id: `reordered-${messageId}`,
+    tick,
+    type: "MESSAGE_REORDERED",
+    moduleId: "networking",
+    payload: { messageId, previousDeliveredTick, newDeliveredTick },
   };
 }
 
@@ -89,5 +104,28 @@ describe("deriveActivePackets", () => {
 
     const packets = deriveActivePackets(events, 3);
     expect(packets).toEqual([{ id: "msg-0", from: "a", to: "b", progress: 1, status: "dropped" }]);
+  });
+
+  it("uses the reordered deliveredTick, not the original, when computing progress after a reorder", () => {
+    const events = [sentEvent(0, "msg-0", 0, 3), reorderedEvent(1, "msg-0", 3, 6)];
+
+    // At tick 3 (the ORIGINAL deliveredTick), the message must still be
+    // in flight -- it was pushed back to tick 6.
+    const atOriginalTick = deriveActivePackets(events, 3);
+    expect(atOriginalTick).toHaveLength(1);
+    expect(atOriginalTick[0].status).toBe("in-flight");
+
+    // Progress at tick 3 should reflect the NEW span (0..6), not the old one (0..3).
+    expect(atOriginalTick[0].progress).toBeCloseTo(3 / 6);
+  });
+
+  it("a reordered message still disappears exactly at its NEW delivered tick, once actually delivered", () => {
+    const events = [
+      sentEvent(0, "msg-0", 0, 3),
+      reorderedEvent(1, "msg-0", 3, 6),
+      deliveredEvent(6, "msg-0"),
+    ];
+    expect(deriveActivePackets(events, 5)).toHaveLength(1); // still in flight just before
+    expect(deriveActivePackets(events, 6)).toHaveLength(0); // delivered at the new tick
   });
 });

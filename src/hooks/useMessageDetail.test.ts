@@ -22,13 +22,13 @@ function deliveredEvent(tick: number, messageId: string): SimEvent {
   };
 }
 
-function droppedEvent(tick: number, messageId: string): SimEvent {
+function droppedEvent(tick: number, messageId: string, reason = "manual"): SimEvent {
   return {
     id: `dropped-${messageId}`,
     tick,
     type: "MESSAGE_DROPPED",
     moduleId: "networking",
-    payload: { messageId },
+    payload: { messageId, reason },
   };
 }
 
@@ -79,5 +79,29 @@ describe("deriveMessageDetail", () => {
   it("still reports in-flight before the drop tick, even though the log already has the drop", () => {
     const events = [sentEvent(0, "msg-0", 0, 3), droppedEvent(2, "msg-0")];
     expect(deriveMessageDetail(events, "msg-0", 1)?.status).toBe("in-flight");
+  });
+
+  it("surfaces the drop reason explicitly, once dropped", () => {
+    const events = [sentEvent(0, "msg-0", 0, 3), droppedEvent(2, "msg-0", "partitioned")];
+    expect(deriveMessageDetail(events, "msg-0", 2)?.dropReason).toBe("partitioned");
+  });
+
+  it("does not surface a drop reason while still in flight", () => {
+    const events = [sentEvent(0, "msg-0", 0, 3)];
+    expect(deriveMessageDetail(events, "msg-0", 1)?.dropReason).toBeUndefined();
+  });
+
+  it("reflects a reordered deliveredTick, not the original one", () => {
+    const events = [
+      sentEvent(0, "msg-0", 0, 3),
+      {
+        id: "reordered-msg-0",
+        tick: 1,
+        type: "MESSAGE_REORDERED",
+        moduleId: "networking",
+        payload: { messageId: "msg-0", previousDeliveredTick: 3, newDeliveredTick: 6 },
+      } satisfies SimEvent,
+    ];
+    expect(deriveMessageDetail(events, "msg-0", 2)?.deliveredTick).toBe(6);
   });
 });

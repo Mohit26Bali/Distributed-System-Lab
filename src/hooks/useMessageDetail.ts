@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import type { SimEvent, Tick } from "@/simulation/engine/types";
+import type { MessageDropReason } from "@/simulation/events/networkEvents";
 import { indexMessagesUpTo } from "./useEventAnimations";
 
 export interface MessageDetail {
@@ -10,6 +11,8 @@ export interface MessageDetail {
   sentTick: Tick;
   deliveredTick: Tick;
   status: "in-flight" | "delivered" | "dropped";
+  /** Only present when status is "dropped" — never inferred, always the committed fact. */
+  dropReason?: MessageDropReason;
 }
 
 /**
@@ -33,6 +36,7 @@ export function deriveMessageDetail(
     sentTick,
     deliveredTick,
     status: entry.resolution,
+    dropReason: entry.dropReason,
   };
 }
 

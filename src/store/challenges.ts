@@ -15,10 +15,20 @@ export interface ChallengeDefinition {
   isComplete: (events: readonly SimEvent[]) => boolean;
 }
 
-export const NETWORKING_CHALLENGE: ChallengeDefinition = {
-  id: "cause-a-drop",
-  title: "Challenge: Cause a Drop",
-  prompt:
-    "Make any message get dropped. You can crash its destination first and send to it, or drop an in-flight message manually — either way counts.",
-  isComplete: (events) => events.some((event) => event.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED),
-};
+export const NETWORKING_CHALLENGES: ChallengeDefinition[] = [
+  {
+    id: "cause-a-drop",
+    title: "Challenge: Cause a Drop",
+    prompt:
+      "Make any message get dropped. Crash its destination and send to it, partition it away, set the drop rate high, or drop it manually — any of those count.",
+    isComplete: (events) =>
+      events.some((event) => event.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED),
+  },
+  {
+    id: "cause-a-duplicate",
+    title: "Challenge: Cause a Duplicate",
+    prompt: "Make a message arrive twice, using the Duplicate fault.",
+    isComplete: (events) =>
+      events.some((event) => event.type === NETWORK_EVENT_TYPES.MESSAGE_DUPLICATED),
+  },
+];

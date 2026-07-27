@@ -1,5 +1,6 @@
 "use client";
 
+import { NetworkConfigPanel } from "@/components/controls/NetworkConfigPanel";
 import { getModuleDefinition } from "@/store/moduleRegistry";
 import { useSimulationStore } from "@/store/simulationStore";
 
@@ -25,11 +26,14 @@ export function ExplanationPane() {
           </p>
         ))}
       </div>
+      <NetworkConfigPanel key={`${moduleId}-network-config`} />
       {/* Keyed by moduleId so switching modules resets guided/quiz progress
           instead of carrying stale state into a different module. */}
       <GuidedStep key={moduleId} />
       {definition.quiz && <Quiz key={`${moduleId}-quiz`} quiz={definition.quiz} />}
-      {definition.challenge && <Challenge challenge={definition.challenge} />}
+      {definition.challenges?.map((challenge) => (
+        <Challenge key={challenge.id} challenge={challenge} />
+      ))}
     </div>
   );
 }

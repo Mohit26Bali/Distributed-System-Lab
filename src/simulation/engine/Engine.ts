@@ -1,6 +1,7 @@
 import { EventLog } from "./EventLog";
 import { Scheduler } from "./Scheduler";
 import type { NetworkModel } from "../network/NetworkModel";
+import { SeededRandom } from "../scheduler/SeededRandom";
 import type { ReduceResult, SimEvent, SimulationModule, Tick } from "./types";
 
 /**
@@ -9,26 +10,33 @@ import type { ReduceResult, SimEvent, SimulationModule, Tick } from "./types";
  *
  * Generic over a plugged-in module (docs/04-simulation-engine.md): the
  * engine never knows what "networking" or "raft" means, it only threads
- * state through reduce()/onTimer() and commits whatever events/schedule
- * requests come back.
+ * state through reduce()/onTimer() and commits whatever events/schedule/
+ * networkPatch requests come back.
  */
 export class Engine<State, Action> {
   private scheduler = new Scheduler();
   private eventLog = new EventLog();
   private nextEventId = 0;
   private state: State;
+  private random: SeededRandom;
 
   constructor(
     private readonly module: SimulationModule<State, Action>,
     private readonly network: NetworkModel,
+    seed = 1,
   ) {
     this.state = module.initialState;
+    this.random = new SeededRandom(seed);
   }
 
   /** Applies a user/UI command immediately, at the current tick. */
   dispatch(action: Action): SimEvent[] {
     const tick = this.scheduler.tick;
-    const result = this.module.reduce(this.state, action, { tick, network: this.network });
+    const result = this.module.reduce(this.state, action, {
+      tick,
+      network: this.network,
+      random: this.random,
+    });
     return this.commit(result, tick);
   }
 
@@ -39,7 +47,11 @@ export class Engine<State, Action> {
 
     const events: SimEvent[] = [];
     for (const entry of due) {
-      const result = this.module.onTimer(this.state, entry.payload, { tick, network: this.network });
+      const result = this.module.onTimer(this.state, entry.payload, {
+        tick,
+        network: this.network,
+        random: this.random,
+      });
       events.push(...this.commit(result, tick));
     }
     return events;
@@ -71,6 +83,10 @@ export class Engine<State, Action> {
 
     for (const request of result.schedule ?? []) {
       this.scheduler.getTimerQueue().schedule(request.dueTick, request.payload);
+    }
+
+    if (result.networkPatch) {
+      this.network.applyPatch(result.networkPatch);
     }
 
     return stamped;

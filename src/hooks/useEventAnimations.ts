@@ -4,7 +4,9 @@ import type { SimEvent, Tick } from "@/simulation/engine/types";
 import {
   NETWORK_EVENT_TYPES,
   type MessageDeliveredPayload,
+  type MessageDropReason,
   type MessageDroppedPayload,
+  type MessageReorderedPayload,
   type MessageSentPayload,
 } from "@/simulation/events/networkEvents";
 
@@ -15,6 +17,8 @@ export interface MessageIndexEntry {
   resolution: MessageResolution;
   /** The tick at which resolution became "delivered"/"dropped"; unset while in-flight. */
   resolvedTick?: Tick;
+  /** Only set when resolution is "dropped" — always explicit, never inferred. */
+  dropReason?: MessageDropReason;
 }
 
 /**
@@ -23,6 +27,11 @@ export interface MessageIndexEntry {
  * backward" rule lives — every other message-related derivation (packet
  * animation, inspector detail) builds on this instead of re-scanning
  * events with its own copy of the same tick-filtering logic.
+ *
+ * Also the single place MESSAGE_REORDERED is applied: a reorder doesn't
+ * create a new message, it corrects the effective deliveredTick of an
+ * existing one, so every consumer (animation progress, inspector detail)
+ * sees the corrected schedule rather than the original one.
  */
 export function indexMessagesUpTo(
   events: readonly SimEvent[],
@@ -49,6 +58,13 @@ export function indexMessagesUpTo(
       if (entry) {
         entry.resolution = "dropped";
         entry.resolvedTick = event.tick;
+        entry.dropReason = payload.reason;
+      }
+    } else if (event.type === NETWORK_EVENT_TYPES.MESSAGE_REORDERED) {
+      const payload = event.payload as MessageReorderedPayload;
+      const entry = index.get(payload.messageId);
+      if (entry) {
+        entry.sent = { ...entry.sent, deliveredTick: payload.newDeliveredTick };
       }
     }
   }

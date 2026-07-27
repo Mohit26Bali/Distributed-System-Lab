@@ -12,6 +12,10 @@ function eventOf(type: string, payload: unknown, tick = 0): SimEvent {
   return { id: `e-${type}-${tick}-${Math.random()}`, tick, type, moduleId: "networking", payload };
 }
 
+function droppedEvent(reason: string) {
+  return eventOf("MESSAGE_DROPPED", { messageId: "msg-0", reason });
+}
+
 describe("NETWORKING_GUIDED_STEPS", () => {
   it("send-ping is satisfied only once a MESSAGE_SENT event exists in the window", () => {
     const step = findStep("send-ping");
@@ -25,6 +29,26 @@ describe("NETWORKING_GUIDED_STEPS", () => {
     expect(step.isSatisfied([eventOf("MESSAGE_DELIVERED", {})])).toBe(true);
   });
 
+  it("manual-drop is satisfied by any MESSAGE_DROPPED, regardless of reason", () => {
+    const step = findStep("manual-drop");
+    expect(step.isSatisfied([droppedEvent("manual")])).toBe(true);
+    expect(step.isSatisfied([droppedEvent("random-loss")])).toBe(true);
+  });
+
+  it("partition-drop requires a MESSAGE_DROPPED with reason 'partitioned' specifically", () => {
+    const step = findStep("partition-drop");
+    expect(step.isSatisfied([droppedEvent("manual")])).toBe(false);
+    expect(step.isSatisfied([droppedEvent("destination-crashed")])).toBe(false);
+    expect(step.isSatisfied([droppedEvent("partitioned")])).toBe(true);
+  });
+
+  it("adjustable-drop-rate requires a MESSAGE_DROPPED with reason 'random-loss' specifically", () => {
+    const step = findStep("adjustable-drop-rate");
+    expect(step.isSatisfied([droppedEvent("manual")])).toBe(false);
+    expect(step.isSatisfied([droppedEvent("destination-crashed")])).toBe(false);
+    expect(step.isSatisfied([droppedEvent("random-loss")])).toBe(true);
+  });
+
   it("kill-node-b requires NODE_CRASHED for node b specifically, not any node", () => {
     const step = findStep("kill-node-b");
     expect(step.isSatisfied([eventOf("NODE_CRASHED", { nodeId: "a" })])).toBe(false);
@@ -32,10 +56,11 @@ describe("NETWORKING_GUIDED_STEPS", () => {
     expect(step.isSatisfied([eventOf("NODE_CRASHED", { nodeId: "b" })])).toBe(true);
   });
 
-  it("send-to-crashed-node and manual-drop are each satisfied by any MESSAGE_DROPPED in their own window", () => {
-    const dropped = [eventOf("MESSAGE_DROPPED", { messageId: "msg-0" })];
-    expect(findStep("send-to-crashed-node").isSatisfied(dropped)).toBe(true);
-    expect(findStep("manual-drop").isSatisfied(dropped)).toBe(true);
+  it("send-to-crashed-node requires a MESSAGE_DROPPED with reason 'destination-crashed' specifically", () => {
+    const step = findStep("send-to-crashed-node");
+    expect(step.isSatisfied([droppedEvent("manual")])).toBe(false);
+    expect(step.isSatisfied([droppedEvent("partitioned")])).toBe(false);
+    expect(step.isSatisfied([droppedEvent("destination-crashed")])).toBe(true);
   });
 
   it(
@@ -54,5 +79,15 @@ describe("NETWORKING_GUIDED_STEPS", () => {
   it("every step has a unique id", () => {
     const ids = NETWORKING_GUIDED_STEPS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("kill-node-b comes after manual-drop, partition-drop, and adjustable-drop-rate — killing " +
+    "node B is permanent for the rest of the session, so anything needing B alive-but-faulty " +
+    "must be scripted before it", () => {
+    const ids = NETWORKING_GUIDED_STEPS.map((s) => s.id);
+    const killIndex = ids.indexOf("kill-node-b");
+    expect(ids.indexOf("manual-drop")).toBeLessThan(killIndex);
+    expect(ids.indexOf("partition-drop")).toBeLessThan(killIndex);
+    expect(ids.indexOf("adjustable-drop-rate")).toBeLessThan(killIndex);
   });
 });

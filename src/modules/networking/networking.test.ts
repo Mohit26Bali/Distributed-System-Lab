@@ -205,3 +205,244 @@ describe("networking module — fault injection", () => {
     expect(engineA.getEvents()).toEqual(engineB.getEvents());
   });
 });
+
+describe("networking module — partition", () => {
+  it("a message crossing a partition is dropped, with reason 'partitioned', exactly at its delivery tick", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // deliveredTick = 3
+    engine.advance(); // tick 1
+    engine.dispatch({ type: "PARTITION_NETWORK", groups: [["a"], ["b", "c"]] });
+    engine.advance(); // tick 2
+    expect(engine.getEvents().some((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED)).toBe(
+      false,
+    );
+
+    engine.advance(); // tick 3 - resolves here
+    const dropped = engine
+      .getEvents()
+      .filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED);
+    expect(dropped).toHaveLength(1);
+    expect(dropped[0]).toMatchObject({
+      tick: 3,
+      payload: { messageId: "msg-0", reason: "partitioned" },
+    });
+  });
+
+  it("healing a partition before a pending message's delivery tick lets it deliver normally", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // deliveredTick = 3
+    engine.dispatch({ type: "PARTITION_NETWORK", groups: [["a"], ["b", "c"]] });
+    engine.dispatch({ type: "HEAL_PARTITION" }); // healed before the message ever resolves
+
+    engine.advance();
+    engine.advance();
+    engine.advance(); // tick 3 - resolves here
+
+    const delivered = engine
+      .getEvents()
+      .filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DELIVERED);
+    expect(delivered).toHaveLength(1);
+  });
+
+  it("does not partition nodes that are in the same group", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "PARTITION_NETWORK", groups: [["a"], ["b", "c"]] });
+    engine.dispatch({ type: "SEND_PING", from: "b", to: "c" }); // same group as each other
+
+    engine.advance();
+    engine.advance();
+    engine.advance();
+
+    const delivered = engine
+      .getEvents()
+      .filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DELIVERED);
+    expect(delivered).toHaveLength(1);
+  });
+});
+
+describe("networking module — configurable latency and drop rate", () => {
+  it("a latency change applies to messages sent after it, via a committed NETWORK_CONFIG_CHANGED event", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    const emitted = engine.dispatch({
+      type: "SET_LINK_CONFIG",
+      from: "a",
+      to: "b",
+      latencyTicks: 5,
+    });
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0].type).toBe(NETWORK_EVENT_TYPES.NETWORK_CONFIG_CHANGED);
+
+    const sent = engine.dispatch({ type: "SEND_PING", from: "a", to: "b" });
+    expect(sent[0]).toMatchObject({ payload: { deliveredTick: 5 } });
+  });
+
+  it("rejects a non-positive latency: no new event", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    const emitted = engine.dispatch({
+      type: "SET_LINK_CONFIG",
+      from: "a",
+      to: "b",
+      latencyTicks: 0,
+    });
+    expect(emitted).toHaveLength(0);
+  });
+
+  it("rejects a dropRate outside [0, 1]: no new event", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    expect(
+      engine.dispatch({ type: "SET_LINK_CONFIG", from: "a", to: "b", dropRate: 1.5 }),
+    ).toHaveLength(0);
+    expect(
+      engine.dispatch({ type: "SET_LINK_CONFIG", from: "a", to: "b", dropRate: -0.1 }),
+    ).toHaveLength(0);
+  });
+
+  it("a dropRate of 1 guarantees a random-loss drop, drawn from the seeded PRNG", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SET_LINK_CONFIG", from: "a", to: "b", dropRate: 1 });
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" });
+
+    engine.advance();
+    engine.advance();
+    engine.advance();
+
+    const dropped = engine
+      .getEvents()
+      .filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DROPPED);
+    expect(dropped).toHaveLength(1);
+    expect(dropped[0]).toMatchObject({ payload: { reason: "random-loss" } });
+  });
+
+  it("a dropRate of 0 never randomly drops (determinism baseline)", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SET_LINK_CONFIG", from: "a", to: "b", dropRate: 0 });
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" });
+
+    engine.advance();
+    engine.advance();
+    engine.advance();
+
+    expect(
+      engine.getEvents().filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DELIVERED),
+    ).toHaveLength(1);
+  });
+});
+
+describe("networking module — reorder", () => {
+  it("reordering pushes a message's delivery to a later tick, via a committed MESSAGE_REORDERED event", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // deliveredTick = 3
+
+    const emitted = engine.dispatch({
+      type: "REORDER_MESSAGE",
+      messageId: "msg-0",
+      delayTicks: 2,
+    });
+    expect(emitted).toHaveLength(1);
+    expect(emitted[0]).toMatchObject({
+      type: NETWORK_EVENT_TYPES.MESSAGE_REORDERED,
+      payload: { messageId: "msg-0", previousDeliveredTick: 3, newDeliveredTick: 5 },
+    });
+  });
+
+  it("a reordered message resolves at its NEW tick, not the original one", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // deliveredTick = 3
+    engine.dispatch({ type: "REORDER_MESSAGE", messageId: "msg-0", delayTicks: 2 }); // now 5
+
+    engine.advance();
+    engine.advance();
+    engine.advance(); // tick 3 - original stale timer fires here, must be a no-op
+    expect(
+      engine.getEvents().filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DELIVERED),
+    ).toHaveLength(0);
+
+    engine.advance();
+    engine.advance(); // tick 5 - the corrected timer resolves here
+    const delivered = engine
+      .getEvents()
+      .filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DELIVERED);
+    expect(delivered).toHaveLength(1);
+    expect(delivered[0]).toMatchObject({ tick: 5 });
+  });
+
+  it("rejects reordering an already-resolved message: no new event", () => {
+    const engine = createTestEngine(1, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // deliveredTick = 1
+    engine.advance(); // delivered
+
+    expect(
+      engine.dispatch({ type: "REORDER_MESSAGE", messageId: "msg-0", delayTicks: 2 }),
+    ).toHaveLength(0);
+  });
+
+  it("rejects a non-positive delay: no new event", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" });
+
+    expect(
+      engine.dispatch({ type: "REORDER_MESSAGE", messageId: "msg-0", delayTicks: 0 }),
+    ).toHaveLength(0);
+  });
+});
+
+describe("networking module — duplicate", () => {
+  it("duplicating a message emits a new MESSAGE_SENT for a distinct id, plus a MESSAGE_DUPLICATED marker", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // msg-0, deliveredTick = 3
+
+    const emitted = engine.dispatch({ type: "DUPLICATE_MESSAGE", messageId: "msg-0" });
+    expect(emitted).toHaveLength(2);
+    expect(emitted[0]).toMatchObject({
+      type: NETWORK_EVENT_TYPES.MESSAGE_SENT,
+      payload: { from: "a", to: "b", deliveredTick: 3 },
+    });
+    expect(emitted[1]).toMatchObject({
+      type: NETWORK_EVENT_TYPES.MESSAGE_DUPLICATED,
+      payload: { originalMessageId: "msg-0" },
+    });
+  });
+
+  it("the duplicate resolves (delivers) independently of the original, at the same tick", () => {
+    const engine = createTestEngine(3, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" });
+    engine.dispatch({ type: "DUPLICATE_MESSAGE", messageId: "msg-0" });
+
+    engine.advance();
+    engine.advance();
+    engine.advance(); // tick 3 - both resolve here
+
+    const delivered = engine
+      .getEvents()
+      .filter((e) => e.type === NETWORK_EVENT_TYPES.MESSAGE_DELIVERED);
+    expect(delivered).toHaveLength(2); // original AND duplicate both delivered
+  });
+
+  it("rejects duplicating a message that is not in flight: no new event", () => {
+    const engine = createTestEngine(1, ["a", "b", "c"]);
+    engine.dispatch({ type: "SEND_PING", from: "a", to: "b" }); // deliveredTick = 1
+    engine.advance(); // delivered
+
+    expect(engine.dispatch({ type: "DUPLICATE_MESSAGE", messageId: "msg-0" })).toHaveLength(0);
+  });
+});
+
+describe("networking module — determinism with the fuller fault set", () => {
+  it("two engines given the same partition/reorder/duplicate/drop-rate sequence produce identical logs", () => {
+    const engineA = createTestEngine(3, ["a", "b", "c"]);
+    const engineB = createTestEngine(3, ["a", "b", "c"]);
+
+    for (const engine of [engineA, engineB]) {
+      engine.dispatch({ type: "SET_LINK_CONFIG", from: "a", to: "c", dropRate: 0.5 });
+      engine.dispatch({ type: "SEND_PING", from: "a", to: "b" });
+      engine.dispatch({ type: "REORDER_MESSAGE", messageId: "msg-0", delayTicks: 1 });
+      engine.dispatch({ type: "SEND_PING", from: "a", to: "c" });
+      engine.dispatch({ type: "DUPLICATE_MESSAGE", messageId: "msg-1" });
+      engine.dispatch({ type: "PARTITION_NETWORK", groups: [["a"], ["b", "c"]] });
+      for (let i = 0; i < 6; i++) engine.advance();
+      engine.dispatch({ type: "HEAL_PARTITION" });
+    }
+
+    expect(engineA.getEvents()).toEqual(engineB.getEvents());
+  });
+});

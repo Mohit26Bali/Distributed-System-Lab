@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { FaultInjectionMenu } from "@/components/controls/FaultInjectionMenu";
@@ -20,25 +21,31 @@ export default async function ModulePage({ params }: ModulePageProps) {
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className="flex min-h-screen flex-col lg:h-screen lg:overflow-hidden">
       <ModuleLoader moduleId={moduleId} />
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-70 shrink-0 overflow-y-auto border-r border-border-subtle bg-bg-panel p-4">
+      <nav aria-label="Lab" className="flex h-9 shrink-0 items-center border-b border-border-subtle bg-bg-canvas px-4">
+        <Link href="/" className="readout text-[11px] text-text-secondary transition hover:text-sky-400">
+          ← Distributed Systems Lab
+        </Link>
+      </nav>
+
+      <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
+        <aside className="max-lg:order-2 w-full overflow-y-auto border-t border-border-subtle bg-bg-panel p-4 lg:w-70 lg:shrink-0 lg:border-t-0 lg:border-r">
           <ExplanationPane />
         </aside>
 
-        <main className="flex-1 overflow-hidden bg-bg-canvas">
+        <main className="max-lg:order-1 h-[65vh] min-h-80 overflow-hidden bg-bg-canvas lg:h-auto lg:flex-1">
           <SimulationCanvas />
         </main>
 
-        <aside className="w-80 shrink-0 overflow-y-auto border-l border-border-subtle bg-bg-panel p-4">
+        <aside className="max-lg:order-3 w-full overflow-y-auto border-t border-border-subtle bg-bg-panel p-4 lg:w-80 lg:shrink-0 lg:border-t-0 lg:border-l">
           <InspectorPanel />
         </aside>
       </div>
 
-      <footer className="flex h-30 shrink-0 items-center gap-4 border-t border-border-subtle bg-bg-panel p-4">
-        <div className="flex-1">
+      <footer className="sticky bottom-0 z-30 flex min-h-30 shrink-0 flex-wrap items-center gap-4 border-t border-border-subtle bg-bg-panel p-4 lg:static">
+        <div className="min-w-60 flex-1">
           <Timeline />
         </div>
         <FaultInjectionMenu />

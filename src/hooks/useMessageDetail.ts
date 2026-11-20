@@ -13,6 +13,12 @@ export interface MessageDetail {
   status: "in-flight" | "delivered" | "dropped";
   /** Only present when status is "dropped" — never inferred, always the committed fact. */
   dropReason?: MessageDropReason;
+  /**
+   * Only present for modules that tag their MESSAGE_SENT payload with a
+   * `kind` (e.g. election's ELECTION/OK/COORDINATOR) — see
+   * docs/10-election-module-design.md. Absent for plain networking pings.
+   */
+  kind?: string;
 }
 
 /**
@@ -29,6 +35,7 @@ export function deriveMessageDetail(
   if (!entry) return undefined;
 
   const { from, to, sentTick, deliveredTick } = entry.sent;
+  const kind = (entry.sent as { kind?: string }).kind;
   return {
     messageId,
     from,
@@ -37,6 +44,7 @@ export function deriveMessageDetail(
     deliveredTick,
     status: entry.resolution,
     dropReason: entry.dropReason,
+    kind,
   };
 }
 

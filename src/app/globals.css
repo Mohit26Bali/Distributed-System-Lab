@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@xyflow/react/dist/style.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -15,9 +14,9 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -54,6 +53,200 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Oscilloscope palette: the default Tailwind colour names are re-pointed so every existing class follows the theme.
+   sky = phosphor green (primary trace), cyan/blue/green/emerald/teal = cyan trace (ok / secondary),
+   purple/violet/pink = magenta trace, amber/yellow/orange = amber trace, red = fault. */
+@theme {
+  --color-sky-50: oklch(0.97 0.030 150);
+  --color-sky-100: oklch(0.94 0.060 150);
+  --color-sky-200: oklch(0.9 0.100 150);
+  --color-sky-300: oklch(0.87 0.150 150);
+  --color-sky-400: oklch(0.84 0.200 150);
+  --color-sky-500: oklch(0.74 0.190 150);
+  --color-sky-600: oklch(0.62 0.160 150);
+  --color-sky-700: oklch(0.5 0.130 150);
+  --color-sky-800: oklch(0.4 0.100 150);
+  --color-sky-900: oklch(0.31 0.080 150);
+  --color-sky-950: oklch(0.22 0.050 150);
+  --color-blue-50: oklch(0.97 0.030 195);
+  --color-blue-100: oklch(0.94 0.060 195);
+  --color-blue-200: oklch(0.9 0.100 195);
+  --color-blue-300: oklch(0.87 0.150 195);
+  --color-blue-400: oklch(0.84 0.200 195);
+  --color-blue-500: oklch(0.74 0.190 195);
+  --color-blue-600: oklch(0.62 0.160 195);
+  --color-blue-700: oklch(0.5 0.130 195);
+  --color-blue-800: oklch(0.4 0.100 195);
+  --color-blue-900: oklch(0.31 0.080 195);
+  --color-blue-950: oklch(0.22 0.050 195);
+  --color-indigo-50: oklch(0.97 0.030 195);
+  --color-indigo-100: oklch(0.94 0.060 195);
+  --color-indigo-200: oklch(0.9 0.100 195);
+  --color-indigo-300: oklch(0.87 0.150 195);
+  --color-indigo-400: oklch(0.84 0.200 195);
+  --color-indigo-500: oklch(0.74 0.190 195);
+  --color-indigo-600: oklch(0.62 0.160 195);
+  --color-indigo-700: oklch(0.5 0.130 195);
+  --color-indigo-800: oklch(0.4 0.100 195);
+  --color-indigo-900: oklch(0.31 0.080 195);
+  --color-indigo-950: oklch(0.22 0.050 195);
+  --color-cyan-50: oklch(0.97 0.030 195);
+  --color-cyan-100: oklch(0.94 0.060 195);
+  --color-cyan-200: oklch(0.9 0.100 195);
+  --color-cyan-300: oklch(0.87 0.150 195);
+  --color-cyan-400: oklch(0.84 0.200 195);
+  --color-cyan-500: oklch(0.74 0.190 195);
+  --color-cyan-600: oklch(0.62 0.160 195);
+  --color-cyan-700: oklch(0.5 0.130 195);
+  --color-cyan-800: oklch(0.4 0.100 195);
+  --color-cyan-900: oklch(0.31 0.080 195);
+  --color-cyan-950: oklch(0.22 0.050 195);
+  --color-teal-50: oklch(0.97 0.030 195);
+  --color-teal-100: oklch(0.94 0.060 195);
+  --color-teal-200: oklch(0.9 0.100 195);
+  --color-teal-300: oklch(0.87 0.150 195);
+  --color-teal-400: oklch(0.84 0.200 195);
+  --color-teal-500: oklch(0.74 0.190 195);
+  --color-teal-600: oklch(0.62 0.160 195);
+  --color-teal-700: oklch(0.5 0.130 195);
+  --color-teal-800: oklch(0.4 0.100 195);
+  --color-teal-900: oklch(0.31 0.080 195);
+  --color-teal-950: oklch(0.22 0.050 195);
+  --color-emerald-50: oklch(0.97 0.030 195);
+  --color-emerald-100: oklch(0.94 0.060 195);
+  --color-emerald-200: oklch(0.9 0.100 195);
+  --color-emerald-300: oklch(0.87 0.150 195);
+  --color-emerald-400: oklch(0.84 0.200 195);
+  --color-emerald-500: oklch(0.74 0.190 195);
+  --color-emerald-600: oklch(0.62 0.160 195);
+  --color-emerald-700: oklch(0.5 0.130 195);
+  --color-emerald-800: oklch(0.4 0.100 195);
+  --color-emerald-900: oklch(0.31 0.080 195);
+  --color-emerald-950: oklch(0.22 0.050 195);
+  --color-green-50: oklch(0.97 0.030 195);
+  --color-green-100: oklch(0.94 0.060 195);
+  --color-green-200: oklch(0.9 0.100 195);
+  --color-green-300: oklch(0.87 0.150 195);
+  --color-green-400: oklch(0.84 0.200 195);
+  --color-green-500: oklch(0.74 0.190 195);
+  --color-green-600: oklch(0.62 0.160 195);
+  --color-green-700: oklch(0.5 0.130 195);
+  --color-green-800: oklch(0.4 0.100 195);
+  --color-green-900: oklch(0.31 0.080 195);
+  --color-green-950: oklch(0.22 0.050 195);
+  --color-lime-50: oklch(0.97 0.030 195);
+  --color-lime-100: oklch(0.94 0.060 195);
+  --color-lime-200: oklch(0.9 0.100 195);
+  --color-lime-300: oklch(0.87 0.150 195);
+  --color-lime-400: oklch(0.84 0.200 195);
+  --color-lime-500: oklch(0.74 0.190 195);
+  --color-lime-600: oklch(0.62 0.160 195);
+  --color-lime-700: oklch(0.5 0.130 195);
+  --color-lime-800: oklch(0.4 0.100 195);
+  --color-lime-900: oklch(0.31 0.080 195);
+  --color-lime-950: oklch(0.22 0.050 195);
+  --color-purple-50: oklch(0.97 0.030 330);
+  --color-purple-100: oklch(0.94 0.060 330);
+  --color-purple-200: oklch(0.9 0.100 330);
+  --color-purple-300: oklch(0.87 0.150 330);
+  --color-purple-400: oklch(0.84 0.200 330);
+  --color-purple-500: oklch(0.74 0.190 330);
+  --color-purple-600: oklch(0.62 0.160 330);
+  --color-purple-700: oklch(0.5 0.130 330);
+  --color-purple-800: oklch(0.4 0.100 330);
+  --color-purple-900: oklch(0.31 0.080 330);
+  --color-purple-950: oklch(0.22 0.050 330);
+  --color-violet-50: oklch(0.97 0.030 330);
+  --color-violet-100: oklch(0.94 0.060 330);
+  --color-violet-200: oklch(0.9 0.100 330);
+  --color-violet-300: oklch(0.87 0.150 330);
+  --color-violet-400: oklch(0.84 0.200 330);
+  --color-violet-500: oklch(0.74 0.190 330);
+  --color-violet-600: oklch(0.62 0.160 330);
+  --color-violet-700: oklch(0.5 0.130 330);
+  --color-violet-800: oklch(0.4 0.100 330);
+  --color-violet-900: oklch(0.31 0.080 330);
+  --color-violet-950: oklch(0.22 0.050 330);
+  --color-fuchsia-50: oklch(0.97 0.030 330);
+  --color-fuchsia-100: oklch(0.94 0.060 330);
+  --color-fuchsia-200: oklch(0.9 0.100 330);
+  --color-fuchsia-300: oklch(0.87 0.150 330);
+  --color-fuchsia-400: oklch(0.84 0.200 330);
+  --color-fuchsia-500: oklch(0.74 0.190 330);
+  --color-fuchsia-600: oklch(0.62 0.160 330);
+  --color-fuchsia-700: oklch(0.5 0.130 330);
+  --color-fuchsia-800: oklch(0.4 0.100 330);
+  --color-fuchsia-900: oklch(0.31 0.080 330);
+  --color-fuchsia-950: oklch(0.22 0.050 330);
+  --color-pink-50: oklch(0.97 0.030 330);
+  --color-pink-100: oklch(0.94 0.060 330);
+  --color-pink-200: oklch(0.9 0.100 330);
+  --color-pink-300: oklch(0.87 0.150 330);
+  --color-pink-400: oklch(0.84 0.200 330);
+  --color-pink-500: oklch(0.74 0.190 330);
+  --color-pink-600: oklch(0.62 0.160 330);
+  --color-pink-700: oklch(0.5 0.130 330);
+  --color-pink-800: oklch(0.4 0.100 330);
+  --color-pink-900: oklch(0.31 0.080 330);
+  --color-pink-950: oklch(0.22 0.050 330);
+  --color-amber-50: oklch(0.97 0.030 85);
+  --color-amber-100: oklch(0.94 0.060 85);
+  --color-amber-200: oklch(0.9 0.100 85);
+  --color-amber-300: oklch(0.87 0.150 85);
+  --color-amber-400: oklch(0.84 0.200 85);
+  --color-amber-500: oklch(0.74 0.190 85);
+  --color-amber-600: oklch(0.62 0.160 85);
+  --color-amber-700: oklch(0.5 0.130 85);
+  --color-amber-800: oklch(0.4 0.100 85);
+  --color-amber-900: oklch(0.31 0.080 85);
+  --color-amber-950: oklch(0.22 0.050 85);
+  --color-yellow-50: oklch(0.97 0.030 95);
+  --color-yellow-100: oklch(0.94 0.060 95);
+  --color-yellow-200: oklch(0.9 0.100 95);
+  --color-yellow-300: oklch(0.87 0.150 95);
+  --color-yellow-400: oklch(0.84 0.200 95);
+  --color-yellow-500: oklch(0.74 0.190 95);
+  --color-yellow-600: oklch(0.62 0.160 95);
+  --color-yellow-700: oklch(0.5 0.130 95);
+  --color-yellow-800: oklch(0.4 0.100 95);
+  --color-yellow-900: oklch(0.31 0.080 95);
+  --color-yellow-950: oklch(0.22 0.050 95);
+  --color-orange-50: oklch(0.97 0.030 60);
+  --color-orange-100: oklch(0.94 0.060 60);
+  --color-orange-200: oklch(0.9 0.100 60);
+  --color-orange-300: oklch(0.87 0.150 60);
+  --color-orange-400: oklch(0.84 0.200 60);
+  --color-orange-500: oklch(0.74 0.190 60);
+  --color-orange-600: oklch(0.62 0.160 60);
+  --color-orange-700: oklch(0.5 0.130 60);
+  --color-orange-800: oklch(0.4 0.100 60);
+  --color-orange-900: oklch(0.31 0.080 60);
+  --color-orange-950: oklch(0.22 0.050 60);
+  --color-red-50: oklch(0.97 0.034 25);
+  --color-red-100: oklch(0.94 0.069 25);
+  --color-red-200: oklch(0.9 0.115 25);
+  --color-red-300: oklch(0.87 0.172 25);
+  --color-red-400: oklch(0.84 0.230 25);
+  --color-red-500: oklch(0.74 0.218 25);
+  --color-red-600: oklch(0.62 0.184 25);
+  --color-red-700: oklch(0.5 0.149 25);
+  --color-red-800: oklch(0.4 0.115 25);
+  --color-red-900: oklch(0.31 0.092 25);
+  --color-red-950: oklch(0.22 0.057 25);
+  --color-rose-50: oklch(0.97 0.034 20);
+  --color-rose-100: oklch(0.94 0.069 20);
+  --color-rose-200: oklch(0.9 0.115 20);
+  --color-rose-300: oklch(0.87 0.172 20);
+  --color-rose-400: oklch(0.84 0.230 20);
+  --color-rose-500: oklch(0.74 0.218 20);
+  --color-rose-600: oklch(0.62 0.184 20);
+  --color-rose-700: oklch(0.5 0.149 20);
+  --color-rose-800: oklch(0.4 0.115 20);
+  --color-rose-900: oklch(0.31 0.092 20);
+  --color-rose-950: oklch(0.22 0.057 20);
+  --font-display: var(--font-chakra), var(--font-geist-sans), sans-serif;
 }
 
 :root {
@@ -93,24 +286,24 @@
   /* Distributed Systems Lab design tokens — see docs/03-design-system.md.
      Dark is the only theme for now, so these are defined once in :root
      rather than duplicated under .dark. */
-  --bg-canvas: oklch(0.12 0 0);
-  --bg-panel: oklch(0.16 0 0);
-  --bg-elevated: oklch(0.21 0 0);
-  --border-subtle: oklch(1 0 0 / 10%);
-  --text-primary: oklch(0.985 0 0);
-  --text-secondary: oklch(0.87 0 0);
-  --text-muted: oklch(0.65 0 0);
+  --bg-canvas: oklch(0.105 0.018 160);
+  --bg-panel: oklch(0.145 0.022 160);
+  --bg-elevated: oklch(0.19 0.028 160);
+  --border-subtle: oklch(0.84 0.16 150 / 16%);
+  --text-primary: oklch(0.96 0.035 150);
+  --text-secondary: oklch(0.87 0.05 150);
+  --text-muted: oklch(0.7 0.05 155);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.105 0.018 160);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.84 0.2 150);
+  --primary-foreground: oklch(0.15 0.03 160);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -118,9 +311,9 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(0.84 0.16 150 / 16%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.84 0.2 150 / 60%);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -148,6 +341,87 @@
   }
 }
 
+/* Landing page "glass + glow" system — ported from a sibling project's
+   homepage design (see git history / conversation for the source). Kept
+   as generic reusable primitives, not landing-page-specific classes, so
+   any future page can use them the same way. */
+.glass {
+  background: oklch(0.15 0.03 160 / 72%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 1px 0 oklch(0.9 0.1 150 / 6%), 0 0 0 1px oklch(0 0 0 / 40%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transform: translateZ(0);
+}
+
+/* A soft double-layer glow keyed off `--accent` (set inline per element,
+   same convention as moduleRegistry's own `--accent` usage) rather than a
+   fixed palette of named glow-colors — this project has ten module accent
+   colors, not a handful of fixed neon ones. */
+.glow-accent {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--accent) 45%, transparent),
+    0 0 24px color-mix(in oklch, var(--accent) 35%, transparent);
+}
+
+/* Landing page background: faint schematic grid, fading toward the edges */
+.bg-grid {
+  background-image:
+    linear-gradient(oklch(0.84 0.2 150 / 9%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.84 0.2 150 / 9%) 1px, transparent 1px),
+    linear-gradient(oklch(0.84 0.2 150 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.84 0.2 150 / 4%) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 40%, transparent 95%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 40%, transparent 95%);
+}
+
+/* Thin custom scrollbars, matching the dark theme instead of the OS default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(1 0 0 / 15%) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 15%);
+  border-radius: 8px;
+}
+
+/* A brief one-shot ring pulse the first time a module's guided step panel
+   mounts — paired with GuidedStep.tsx's scrollIntoView, so a learner who
+   goes straight for the playback controls without scrolling past the
+   Write/Submit controls above still has a chance to notice it's there. */
+@keyframes guided-step-highlight {
+  0% {
+    box-shadow: 0 0 0 2px oklch(0.7 0.15 240 / 60%);
+  }
+  100% {
+    box-shadow: 0 0 0 2px oklch(0.7 0.15 240 / 0%);
+  }
+}
+.guided-step-highlight {
+  animation: guided-step-highlight 1.8s ease-out 1;
+}
+
+/* Reduced motion: collapse every CSS animation/transition globally. This is
+   a blanket safety net for the plain-CSS motion above; JS-driven Framer
+   Motion values elsewhere in the app are handled separately by
+   usePrefersReducedMotion.ts, which this does not replace. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* React Flow ships light-theme control/attribution chrome by default;
    override just enough to sit on our dark canvas. */
 .react-flow__controls-button {
@@ -164,3 +438,33 @@
 .react-flow__attribution a {
   color: var(--text-muted);
 }
+/* ------------------------------------------------------------ oscilloscope ----- */
+body {
+  background-color: var(--bg-canvas);
+  /* the screen graticule: ten divisions of faint phosphor lines across the whole page */
+  background-image:
+    linear-gradient(oklch(0.84 0.2 150 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.84 0.2 150 / 5%) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-attachment: fixed;
+}
+/* fine CRT scan lines over the page, static and very faint */
+body::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: repeating-linear-gradient(0deg, oklch(0 0 0 / 7%) 0, oklch(0 0 0 / 7%) 1px, transparent 1px, transparent 4px);
+  mix-blend-mode: multiply;
+}
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0.01em; }
+.readout { font-family: var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; text-transform: uppercase; }
+.trace-glow { text-shadow: 0 0 18px oklch(0.84 0.2 150 / 55%), 0 0 2px oklch(0.84 0.2 150 / 80%); }
+.hero-text { text-shadow: 0 1px 14px oklch(0.09 0.02 160 / 90%); }
+:focus-visible { outline: 2px solid var(--color-sky-400); outline-offset: 2px; }
+/* React Flow edges and controls follow the palette */
+.react-flow__edge-path { stroke: oklch(0.84 0.2 150 / 55%); }
+@media (prefers-reduced-motion: reduce) { body { background-attachment: scroll; } }
+
+input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color: var(--color-sky-400); }

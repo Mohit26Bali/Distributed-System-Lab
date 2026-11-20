@@ -1,15 +1,26 @@
 import { create } from "zustand";
 
+import type { ElectionAction } from "@/modules/election/electionReducer";
 import type { NetworkingAction } from "@/modules/networking/networkingReducer";
-import type { NetworkingState } from "@/modules/networking/networkingState";
+import type { RaftAction } from "@/modules/raft/raftReducer";
+import type { ReplicationAction } from "@/modules/replication/replicationReducer";
 import { Engine } from "@/simulation/engine/Engine";
-import type { SimEvent, Tick } from "@/simulation/engine/types";
+import type { SimEvent, SimulationModule, Tick } from "@/simulation/engine/types";
 import { NetworkModel } from "@/simulation/network/NetworkModel";
 import { getModuleDefinition } from "./moduleRegistry";
 import { useUiStore } from "./uiStore";
 
 export type PlaybackStatus = "playing" | "paused";
 export type PlaybackSpeed = 0.5 | 1 | 2;
+
+/**
+ * The store is the one seam allowed to know about every concrete module's
+ * action shape (per docs/02-folder-structure.md) — this union is extended
+ * by hand each time a new module is added, kept small and explicit rather
+ * than widened to `unknown`, so components dispatching actions (e.g.
+ * FaultInjectionMenu's KILL_NODE) stay type-checked.
+ */
+export type ModuleAction = NetworkingAction | ElectionAction | RaftAction | ReplicationAction;
 
 interface SimulationState {
   /** Which module's engine is currently loaded; null until loadModule() runs. */
@@ -30,7 +41,7 @@ interface SimulationState {
   speed: PlaybackSpeed;
   /** Constructs a fresh engine for the given module, discarding any prior one. */
   loadModule: (moduleId: string) => void;
-  dispatch: (action: NetworkingAction) => void;
+  dispatch: (action: ModuleAction) => void;
   seek: (tick: Tick) => void;
   /**
    * Moves the viewpoint one tick forward. If we're behind the live tick
@@ -51,9 +62,9 @@ interface SimulationState {
 // reference, reassigned wholesale by loadModule(). getEngine() always reads
 // the *current* value, so no action closure ever holds a stale reference
 // across a module switch.
-let engine: Engine<NetworkingState, NetworkingAction> | null = null;
+let engine: Engine<unknown, ModuleAction> | null = null;
 
-function getEngine(): Engine<NetworkingState, NetworkingAction> {
+function getEngine(): Engine<unknown, ModuleAction> {
   if (!engine) {
     throw new Error("No module loaded yet — call loadModule() first.");
   }
@@ -75,7 +86,14 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       throw new Error(`Unknown module: "${moduleId}"`);
     }
 
-    engine = new Engine(definition.createModule(), new NetworkModel(definition.links));
+    // The registry deliberately keeps each module's State/Action opaque
+    // (see docs/10-election-module-design.md) — this cast is the one place
+    // the store bridges back to a concrete-enough type for dispatch() to
+    // stay checked against ModuleAction above.
+    engine = new Engine(
+      definition.createModule() as SimulationModule<unknown, ModuleAction>,
+      new NetworkModel(definition.links),
+    );
     useUiStore.getState().clearSelection();
 
     set({

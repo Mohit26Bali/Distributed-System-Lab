@@ -12,6 +12,7 @@ import {
 } from "@xyflow/react";
 import { AnimatePresence } from "framer-motion";
 
+import { NetworkingControls } from "@/components/controls/NetworkingControls";
 import { useEventAnimations } from "@/hooks/useEventAnimations";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { getModuleDefinition } from "@/store/moduleRegistry";
@@ -38,7 +39,6 @@ export function SimulationCanvas() {
   const viewTick = useSimulationStore((state) => state.viewTick);
   const events = useSimulationStore((state) => state.events);
   const animateTransitions = useSimulationStore((state) => state.animateTransitions);
-  const dispatch = useSimulationStore((state) => state.dispatch);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const definition = moduleId ? getModuleDefinition(moduleId) : undefined;
@@ -82,8 +82,6 @@ export function SimulationCanvas() {
     return <p className="p-4 text-xs text-text-muted">Loading module…</p>;
   }
 
-  const [firstNodeId, secondNodeId] = definition.nodeIds;
-
   return (
     <ReactFlow
       // Keyed by module so switching modules remounts the canvas fresh —
@@ -116,18 +114,33 @@ export function SimulationCanvas() {
           })}
         </AnimatePresence>
       </ViewportPortal>
-      <Panel
-        position="top-left"
-        className="flex items-center gap-3 rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-sm"
-      >
-        <button
-          type="button"
-          onClick={() => dispatch({ type: "SEND_PING", from: firstNodeId, to: secondNodeId })}
-          className="rounded border border-border-subtle bg-bg-panel px-2 py-1 text-xs text-text-primary hover:bg-bg-canvas"
+      {/* Networking/Introduction's only real "send a message" trigger — a
+          module-specific control, not something every module needs (see
+          docs/16-replication-module-design.md's Milestone 31 note). Kept
+          as an on-canvas Panel, not moved to ExplanationPane, since
+          Networking's own guided step wording ("the button above the
+          canvas") depends on where it visually sits. */}
+      {(moduleId === "networking" || moduleId === "introduction") && (
+        <Panel
+          position="top-left"
+          className="flex items-center gap-3 rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-sm"
         >
-          Send Ping {firstNodeId.toUpperCase()}→{secondNodeId.toUpperCase()}
-        </button>
-      </Panel>
+          <NetworkingControls />
+        </Panel>
+      )}
+      {/* Pressing Play before anything has ever happened otherwise gives
+          zero feedback beyond the tick counter moving — nothing wrong is
+          happening, but it looks exactly like something is. Only shown
+          when the whole session's event log is still empty, so it
+          disappears the instant any real action (a write, an election,
+          anything) commits its first event, never lingering afterward. */}
+      {events.length === 0 && (
+        <Panel position="top-center" className="pointer-events-none mt-16">
+          <p className="rounded-full border border-border-subtle bg-bg-elevated/90 px-4 py-2 text-xs text-text-muted backdrop-blur-sm">
+            Nothing has happened yet — try the guided step in the left panel.
+          </p>
+        </Panel>
+      )}
     </ReactFlow>
   );
 }

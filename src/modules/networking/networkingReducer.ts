@@ -229,5 +229,14 @@ export function reduceNetworking(
         schedule: [scheduleDelivery(duplicateId, original.deliveredTick)],
       };
     }
+
+    default:
+      // The store dispatches through a shared cross-module action union
+      // (see docs/12-raft-module-design.md's SET_LINK_CONFIG fix) — an
+      // action belonging to a different module's action type can reach
+      // here at runtime even though TypeScript considers this switch
+      // exhaustive for NetworkingAction alone. Defensive no-op rather than
+      // an unhandled crash.
+      return NO_OP(state);
   }
 }

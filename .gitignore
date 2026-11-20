@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local notes, tests and AI-tool files stay off GitHub
+_local/
+*.test.ts
+*.test.tsx
+vitest.config.ts
+CLAUDE.md
+AGENTS.md

@@ -57,7 +57,8 @@ export function Quiz({ quiz }: QuizProps) {
       {guess && outcome !== undefined && (
         <div className="space-y-2">
           <p className={`text-xs ${outcome === guess ? "text-emerald-400" : "text-red-400"}`}>
-            {outcome === guess ? "Correct." : "Not quite."} The message was {outcome}.
+            {outcome === guess ? "Correct." : "Not quite."} Actual outcome:{" "}
+            {quiz.options.find((option) => option.id === outcome)?.label ?? outcome}.
           </p>
           <button
             type="button"

@@ -24,6 +24,13 @@ export function EventDetail({ detail }: EventDetailProps) {
         <dt className="text-text-muted">Status</dt>
         <dd className="font-mono text-text-primary">{detail.status}</dd>
 
+        {detail.kind && (
+          <>
+            <dt className="text-text-muted">Kind</dt>
+            <dd className="font-mono text-text-primary">{detail.kind}</dd>
+          </>
+        )}
+
         {detail.dropReason && (
           <>
             <dt className="text-text-muted">Reason</dt>
